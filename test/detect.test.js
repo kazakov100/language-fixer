@@ -118,6 +118,27 @@ function check(name, cond, detail) {
     `got ${JSON.stringify(out3)}`);
 }
 
+// ── 5b. A longer correct continuation must not hide an earlier garbled part ──
+{
+  // The user typed on the wrong layout, noticed (or the chip vanished while they
+  // did something else), switched layout and kept typing correctly. The correct
+  // text outweighs the garbled opening by character count, but the opening must
+  // still be offered for conversion — and the correct part left alone.
+  const garbledStart = D.toHebrew('hello how are you');
+  const tail = ' i am fine thanks for asking me about the meeting tomorrow';
+  const field = garbledStart + tail;
+  check('detects garbled opening despite longer correct tail',
+    D.detectConversion(field) === 'toEnglish', `got ${D.detectConversion(field)}`);
+  check('converts the opening and leaves the correct tail',
+    D.convertSpan(field, 'toEnglish') === 'hello how are you' + tail,
+    `got ${JSON.stringify(D.convertSpan(field, 'toEnglish'))}`);
+  // ...while correctly-typed mixed-script text stays silent.
+  for (const s of ['שלום hello', 'אני אוהב את github הזה מאוד', 'please send me the שלום document tomorrow']) {
+    check(`correct mixed text stays silent: ${s}`, D.detectConversion(s) === null,
+      `flagged as ${D.detectConversion(s)}`);
+  }
+}
+
 // ── 6. The hotkey flip is unconditional and reversible ───────────────────────
 {
   // Detection deliberately ignores these; the hotkey must still work, which is

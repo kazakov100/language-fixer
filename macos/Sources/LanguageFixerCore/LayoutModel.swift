@@ -194,20 +194,24 @@ public final class LayoutModel {
         let tokens = tokenize(text)
         var totals: [Direction: Double] = [.toEnglish: 0, .toHebrew: 0]
         var lengths: [Direction: Int] = [.toEnglish: 0, .toHebrew: 0]
-        var letters = 0
 
         for token in tokens {
             if isCodeLike(token) { return nil }
             guard let r = tokenEvidence(token) else { continue }
-            letters += r.len
             totals[r.dir]! += r.ev * Double(r.len)
             lengths[r.dir]! += r.len
         }
-        if letters < 4 { return nil }
 
-        let dir: Direction = lengths[.toEnglish]! >= lengths[.toHebrew]! ? .toEnglish : .toHebrew
-        guard lengths[dir]! > 0 else { return nil }
-        return (totals[dir]! / Double(lengths[dir]!)) > LayoutModel.THRESHOLD ? dir : nil
+        // Judge each direction on its own tokens and take the stronger verdict —
+        // never pick by which script has more characters (see detect.js).
+        var best: Direction? = nil
+        var bestMean = LayoutModel.THRESHOLD
+        for dir in [Direction.toEnglish, Direction.toHebrew] {
+            guard lengths[dir]! >= 4 else { continue }
+            let mean = totals[dir]! / Double(lengths[dir]!)
+            if mean > bestMean { best = dir; bestMean = mean }
+        }
+        return best
     }
 
     /// Convert only the tokens that are actually in the wrong script, leaving

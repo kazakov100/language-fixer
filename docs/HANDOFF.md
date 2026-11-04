@@ -24,7 +24,7 @@ Repo `kazakov100/language-fixer`, branch
 | `content.js`, `background.js`, `popup.*` | Extension UI, hotkey relay, per-site toggle. |
 | `tools/build_model.js` | Regenerates the model reproducibly from public corpora. |
 
-`npm test` → 94 + 29 assertions, all green.
+`npm test` → 99 + 29 assertions, all green.
 
 **Detection accuracy** — measured via `tools/eval_model.js` (new: this didn't
 exist before, the earlier number wasn't reproducible from anything in the repo),

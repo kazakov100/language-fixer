@@ -106,6 +106,20 @@ check("leaves a correct same-script word untouched", out3.hasSuffix(" שלום")
 check("still fixes the actually-garbled part",
       out3 == "hello world how are you doing today שלום", "got \(out3)")
 
+// ── 5b. A longer correct continuation must not hide an earlier garbled part ──
+let garbledStart = D.toHebrew("hello how are you")
+let tail = " i am fine thanks for asking me about the meeting tomorrow"
+let field = garbledStart + tail
+check("detects garbled opening despite longer correct tail",
+      D.detectConversion(field) == .toEnglish, "got \(String(describing: D.detectConversion(field)))")
+check("converts the opening and leaves the correct tail",
+      D.convertSpan(field, direction: .toEnglish) == "hello how are you" + tail,
+      "got \(D.convertSpan(field, direction: .toEnglish))")
+for s in ["שלום hello", "אני אוהב את github הזה מאוד", "please send me the שלום document tomorrow"] {
+    check("correct mixed text stays silent: \(s)", D.detectConversion(s) == nil,
+          "flagged as \(String(describing: D.detectConversion(s)))")
+}
+
 // ── 6. The hotkey flip is unconditional and reversible ──────────────────────
 for s in ["xk9vrm2p", "hunter2", "github", "שלום"] {
     check("flip is its own inverse: \(s)", D.flip(D.flip(s)) == s,

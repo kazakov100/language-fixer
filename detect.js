@@ -145,21 +145,30 @@
     var tokens = tokenize(text);
     var totals = { toEnglish: 0, toHebrew: 0 };
     var lengths = { toEnglish: 0, toHebrew: 0 };
-    var letters = 0;
 
     for (var i = 0; i < tokens.length; i++) {
       if (isCodeLike(tokens[i])) return null;
       var r = tokenEvidence(tokens[i]);
       if (!r) continue;
-      letters += r.len;
       totals[r.dir] += r.ev * r.len;
       lengths[r.dir] += r.len;
     }
-    if (letters < 4) return null;
 
-    var dir = lengths.toEnglish >= lengths.toHebrew ? 'toEnglish' : 'toHebrew';
-    if (!lengths[dir]) return null;
-    return totals[dir] / lengths[dir] > THRESHOLD ? dir : null;
+    // Judge each direction on its own tokens and take the stronger verdict. The
+    // direction must NOT be picked by which script has more characters: a field
+    // holding a garbled opening plus a longer, correctly-typed continuation
+    // (the user noticed, switched layout, kept typing) is dominated by the
+    // correct script, which scores negative — and the garbled part would never
+    // be offered for conversion.
+    var best = null, bestMean = THRESHOLD;
+    var dirs = ['toEnglish', 'toHebrew'];
+    for (var d = 0; d < dirs.length; d++) {
+      var dir = dirs[d];
+      if (lengths[dir] < 4) continue;      // too little evidence to act on
+      var mean = totals[dir] / lengths[dir];
+      if (mean > bestMean) { best = dir; bestMean = mean; }
+    }
+    return best;
   }
 
   // Unconditional flip, used by the hotkey. Direction is inferred from script
